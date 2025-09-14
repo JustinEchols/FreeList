@@ -37,6 +37,19 @@ FreeListAdd(int_free_list *FreeList, memory_arena *Arena, int A)
 }
 
 internal void
+FreeListClear(int_free_list *FreeList)
+{
+	for(int_link **LinkPtr = &FreeList->List; *LinkPtr;)
+	{
+		int_link *Link = *LinkPtr;
+		*LinkPtr = Link->Next;
+		Link->Next = FreeList->Free;
+		FreeList->Free = Link;
+		Link->Data = 0;
+	}
+}
+
+internal void
 FreeListAddIfUnique(int_free_list *FreeList, memory_arena *Arena, int A)
 {
 	for(int_link *Link = FreeList->List; Link; Link = Link->Next)
@@ -86,17 +99,31 @@ int main(int Argc, char **Argv)
 	int_record Record;
 	ArenaInitialize(&Record.Arena, Memory, Kilobyte(64));
 
-	for(int Index = 0; Index < 10; ++Index)
 	{
-		FreeListAdd(&Record.IntFreeList, &Record.Arena, Index);
+		for(int Index = 0; Index < 10; ++Index)
+		{
+			FreeListAdd(&Record.IntFreeList, &Record.Arena, Index);
+		}
+
+		for(int Index = 0; Index < 11; ++Index)
+		{
+			FreeListAddIfUnique(&Record.IntFreeList, &Record.Arena, Index);
+		}
+		FreeListPrint(&Record.IntFreeList);
 	}
 
-	for(int Index = 0; Index < 11; ++Index)
 	{
-		FreeListAddIfUnique(&Record.IntFreeList, &Record.Arena, Index);
+		FreeListClear(&Record.IntFreeList);
+		for(int Index = 0; Index < 11; ++Index)
+		{
+			if(Index % 2 == 0)
+			{
+				FreeListAdd(&Record.IntFreeList, &Record.Arena, Index);
+			}
+		}
+		FreeListPrint(&Record.IntFreeList);
 	}
 
-	FreeListPrint(&Record.IntFreeList);
 	MemoryFree(Memory);
 
 	return(0);
